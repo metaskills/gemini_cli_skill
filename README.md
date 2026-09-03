@@ -15,22 +15,39 @@ This skill teaches Claude Code how to wield Gemini CLI for:
 
 ## Installation
 
-Copy the skill directory to your Claude Code skills folder:
+Install with the [`skills`](https://github.com/vercel-labs/skills) CLI:
 
 ```bash
-# Clone the repo
-git clone https://github.com/forayconsulting/gemini_cli_skill.git
+# Install globally, for every project
+npx skills add metaskills/gemini_cli_skill --global
 
-# Copy to Claude Code skills directory
-cp -r gemini_cli_skill ~/.claude/skills/gemini-cli
+# Or install into the current project only
+npx skills add metaskills/gemini_cli_skill
 ```
 
-Or manually create `~/.claude/skills/gemini-cli/` and copy the files.
+Useful flags:
+
+```bash
+# Target specific agents (defaults to whatever it detects)
+npx skills add metaskills/gemini_cli_skill -g -a claude-code
+
+# Copy the files instead of symlinking
+npx skills add metaskills/gemini_cli_skill -g --copy
+
+# Pull down later updates
+npx skills update gemini-cli
+```
+
+Try it without installing:
+
+```bash
+npx skills use metaskills/gemini_cli_skill
+```
 
 ## Prerequisites
 
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli) installed
-- Gemini API key or OAuth authentication configured
+- Authentication configured (API key, OAuth, or Vertex AI service account)
 
 ```bash
 # Install Gemini CLI
@@ -39,6 +56,21 @@ npm install -g @google/gemini-cli
 # Authenticate
 gemini  # First run prompts for auth
 ```
+
+### Authentication
+
+There are several ways to authenticate Gemini CLI, and the [official docs](https://github.com/google-gemini/gemini-cli/blob/main/docs/get-started/authentication.md) are the source of truth. Start there if your setup differs from what follows.
+
+The setup I favor is Vertex AI with a service account JSON - nothing interactive, nothing user-scoped, and quota lands on a GCP project you control:
+
+```bash
+GOOGLE_APPLICATION_CREDENTIALS=/path/to.json
+GOOGLE_CLOUD_PROJECT=foo-bar-dev-055c
+GOOGLE_CLOUD_LOCATION=global
+GOOGLE_GENAI_USE_VERTEXAI=true
+```
+
+This needs the Vertex AI API enabled on the project and the service account granted `roles/aiplatform.user`. Leave `GEMINI_API_KEY` unset so the CLI does not prefer it over Vertex. See [reference.md](reference.md#authentication) for the per-variable breakdown and the failure modes.
 
 ## Files
 
@@ -73,9 +105,12 @@ Ready-to-use templates for:
 
 ### Integration Patterns
 
+- **Session Threads** - Pin a `session_id`, then send follow-ups with `-r` instead of re-sending context
+- **Long-Form Writing Handoff** - Outline, draft, revise, write to disk across turns
+- **File Attachments** - `@path` for text, images, PDFs, and whole directories
 - **Generate-Review-Fix** - Quality assurance cycle
 - **Background Execution** - Parallel task processing
-- **Model Selection** - Pro vs Flash decision tree
+- **Model Selection** - `gemini-3.8-flash` by default, `gemini-3-pro-preview` only when needed
 - **Rate Limit Handling** - Strategies for free tier limits
 
 ### Gemini's Unique Tools
@@ -88,19 +123,24 @@ Ready-to-use templates for:
 
 ```bash
 # Basic generation
-gemini "Create [description]" --yolo -o text
+gemini "Create [description]" --yolo -m gemini-3.8-flash -o text
 
 # Code review
-gemini "Review [file] for bugs and security issues" -o text
+gemini "Review [file] for bugs and security issues" -m gemini-3.8-flash -o text
 
 # Web research
-gemini "What's new in [topic]? Use Google Search." -o text
+gemini "What's new in [topic]? Use Google Search." -m gemini-3.8-flash -o text
 
 # Architecture analysis
-gemini "Use codebase_investigator to analyze this project" -o text
+gemini "Use codebase_investigator to analyze this project" -m gemini-3.8-flash -o text
 
-# Faster model for simple tasks
-gemini "[prompt]" -m gemini-2.5-flash -o text
+# Pro model, only when a task genuinely needs it
+gemini "[prompt]" -m gemini-3-pro-preview -o text
+
+# Multi-turn thread with attachments
+SID=$(uuidgen | tr 'A-Z' 'a-z')
+gemini -p "Draft from @notes.md" -m gemini-3.8-flash --session-id "$SID" -o json
+echo "Tighten the opening" | gemini -r "$SID" -m gemini-3.8-flash -o json
 ```
 
 ## Why Use Gemini from Claude Code?

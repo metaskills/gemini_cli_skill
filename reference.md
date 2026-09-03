@@ -1,6 +1,6 @@
 # Gemini CLI Command Reference
 
-Complete reference for Gemini CLI v0.16.0+
+Complete reference for Gemini CLI, verified against v0.58.0
 
 ## Installation
 
@@ -12,12 +12,44 @@ npx @google/gemini-cli
 
 ## Authentication
 
+Gemini CLI supports several auth paths. Defer to the [official authentication docs](https://github.com/google-gemini/gemini-cli/blob/main/docs/get-started/authentication.md) for the full list - this section covers the common ones.
+
 ```bash
-# Option 1: API Key
+# Option 1: API Key (Gemini API / AI Studio)
 export GEMINI_API_KEY=your_key
 
-# Option 2: OAuth (interactive)
+# Option 2: OAuth (interactive, personal Google account)
 gemini  # First run prompts for auth
+```
+
+### Option 3: Vertex AI with a Service Account JSON
+
+The preferred setup when the CLI runs unattended (CI, scripts, agent orchestration) or against a GCP project with billing and quota you control. No interactive login, no user-scoped token to refresh.
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to.json
+export GOOGLE_CLOUD_PROJECT=foo-bar-dev-055c
+export GOOGLE_CLOUD_LOCATION=global
+export GOOGLE_GENAI_USE_VERTEXAI=true
+```
+
+| Variable | Purpose |
+|----------|---------|
+| `GOOGLE_APPLICATION_CREDENTIALS` | Absolute path to the service account key JSON |
+| `GOOGLE_CLOUD_PROJECT` | GCP project ID that owns the Vertex AI quota |
+| `GOOGLE_CLOUD_LOCATION` | Vertex region, or `global` for the multi-region endpoint |
+| `GOOGLE_GENAI_USE_VERTEXAI` | `true` routes the CLI at Vertex AI instead of the Gemini API |
+
+Requirements:
+
+- The Vertex AI API enabled on the project.
+- The service account granted `roles/aiplatform.user` (or narrower, if you know which calls you need).
+- `GEMINI_API_KEY` unset - if it is present the CLI may prefer it over Vertex.
+
+Verify the wiring before relying on it:
+
+```bash
+gemini -p "Reply with OK" -m gemini-3.8-flash -o text
 ```
 
 ## Command Line Flags
@@ -27,15 +59,19 @@ gemini  # First run prompts for auth
 | Flag | Short | Description |
 |------|-------|-------------|
 | `--yolo` | `-y` | Auto-approve all tool calls |
+| `--prompt` | `-p` | Run headless with this prompt (explicit non-interactive form) |
 | `--output-format` | `-o` | Output format: `text`, `json`, `stream-json` |
-| `--model` | `-m` | Model selection (e.g., `gemini-2.5-flash`) |
+| `--skip-trust` | | Trust the current directory. Required for scripted runs in untrusted dirs |
+| `--model` | `-m` | Model selection - always pass explicitly: `gemini-3.8-flash` (default) or `gemini-3-pro-preview` |
 
 ### Session Management
 
 | Flag | Short | Description |
 |------|-------|-------------|
-| `--resume` | `-r` | Resume session by index or "latest" |
-| `--list-sessions` | | List available sessions |
+| `--resume` | `-r` | Resume a session by UUID (preferred), index, or "latest" |
+| `--session-id` | | Start a **new** session with a UUID you supply. Errors if it already exists |
+| `--session-file` | | Load a session from a JSON file |
+| `--list-sessions` | | List available sessions with their UUIDs |
 | `--delete-session` | | Delete session by index |
 
 ### Execution Options
@@ -67,15 +103,15 @@ gemini  # First run prompts for auth
 
 ## Output Formats
 
-### Text (`-o text`)
+### Text (`-m gemini-3.8-flash -o text`)
 ```bash
-gemini "prompt" -o text
+gemini "prompt" -m gemini-3.8-flash -o text
 # Returns: Human-readable response
 ```
 
-### JSON (`-o json`)
+### JSON (`-m gemini-3.8-flash -o json`)
 ```bash
-gemini "prompt" -o json
+gemini "prompt" -m gemini-3.8-flash -o json
 ```
 
 Returns structured data:
@@ -84,7 +120,7 @@ Returns structured data:
   "response": "The actual response content",
   "stats": {
     "models": {
-      "gemini-2.5-flash": {
+      "gemini-3.8-flash": {
         "api": {
           "totalRequests": 3,
           "totalErrors": 0,
@@ -123,19 +159,20 @@ Real-time newline-delimited JSON events for monitoring long tasks.
 
 ### Available Models
 
-| Model | Use Case | Context |
-|-------|----------|---------|
-| `gemini-3-pro` | Complex tasks (default) | 1M tokens |
-| `gemini-2.5-flash` | Quick tasks, lower latency | Large |
-| `gemini-2.5-flash-lite` | Fastest, simplest tasks | Medium |
+Only these two model IDs are allowed. Always pass `-m` explicitly - never rely on the CLI default.
+
+| Model | Use Case |
+|-------|----------|
+| `gemini-3.8-flash` | Default for everything |
+| `gemini-3-pro-preview` | Only when a Pro model is genuinely required |
 
 ### Usage
 ```bash
-# Default (Pro)
-gemini "complex analysis" -o text
+# Default
+gemini "simple task" -m gemini-3.8-flash -o text
 
-# Flash for speed
-gemini "simple task" -m gemini-2.5-flash -o text
+# Pro only when needed
+gemini "complex analysis" -m gemini-3-pro-preview -o text
 ```
 
 ## Configuration Files
@@ -203,14 +240,33 @@ Available sessions for this project (5):
   ...
 ```
 
+The bracketed UUID is the durable handle. Indexes shift as new sessions are created.
+
+### Get a Session ID
+
+Every `-o json` run returns one at the top level:
+
+```bash
+SID=$(gemini -p "[task]" -m gemini-3.8-flash -o json | jq -r '.session_id')
+```
+
+Or set it yourself on the first call:
+
+```bash
+SID=$(uuidgen | tr 'A-Z' 'a-z')
+gemini -p "[task]" -m gemini-3.8-flash --session-id "$SID" -o json
+```
+
 ### Resume Session
 ```bash
-# By index
-echo "follow-up question" | gemini -r 1 -o text
+# By UUID - always prefer this
+echo "follow-up question" | gemini -r "$SID" -m gemini-3.8-flash -o json
 
-# Latest session
-echo "continue" | gemini -r latest -o text
+# By index or latest - convenient, but fragile in scripts
+echo "continue" | gemini -r latest -m gemini-3.8-flash -o text
 ```
+
+A resumed run returns the same `session_id`, which is how you confirm the follow-up landed on the right conversation. Reusing `--session-id` instead of `-r` fails with `Session ID "..." already exists`.
 
 ## Rate Limits
 
@@ -224,7 +280,7 @@ echo "continue" | gemini -r latest -o text
 - Typical wait: 1-5 seconds
 
 ### Mitigation
-1. Use `gemini-2.5-flash` for simple tasks
+1. Use `gemini-3.8-flash` (the default) instead of `gemini-3-pro-preview`
 2. Batch operations into single prompts
 3. Run long tasks in background
 
@@ -248,15 +304,33 @@ In interactive mode, these slash commands are available:
 
 ### Pipe Input
 ```bash
-echo "What is 2+2?" | gemini -o text
-cat file.txt | gemini "summarize this" -o text
+echo "What is 2+2?" | gemini -m gemini-3.8-flash -o text
+cat file.txt | gemini "summarize this" -m gemini-3.8-flash -o text
 ```
 
 ### File Reference Syntax
 In prompts, reference files with `@`:
 ```bash
-gemini "Review @./src/main.js for bugs" -o text
+gemini "Review @./src/main.js for bugs" -m gemini-3.8-flash -o text
+
+# Images and PDFs attach as real multimodal input
+gemini "Transcribe @design/board.png as markdown" -m gemini-3.8-flash -o text
+gemini "Summarize the findings in @report.pdf" -m gemini-3.8-flash -o text
+
+# Directories expand to every file inside
+gemini "Review everything in @src/handlers/" -m gemini-3.8-flash -o text
+
+# Absolute paths outside the workspace resolve without extra flags
+gemini "Check @/Users/me/notes/spec.md against @./src" -m gemini-3.8-flash -o text
 ```
+
+| Target | Behavior |
+|--------|----------|
+| Text file | Read via the `read_file` tool |
+| Image, PDF | Inlined as an attachment, no tool call, costs prompt tokens |
+| Directory | Expands to all contained files |
+| Binary | No error, metadata only, contents skipped |
+| `.geminiignore` match | Excluded from expansion |
 
 ### Shell Command Execution
 In interactive mode, prefix with `!`:
@@ -279,14 +353,16 @@ In interactive mode, prefix with `!`:
 
 | Issue | Solution |
 |-------|----------|
-| "API key not found" | Set `GEMINI_API_KEY` env var |
-| "Rate limit exceeded" | Wait for auto-retry or use Flash |
+| "API key not found" | Set `GEMINI_API_KEY`, or configure Vertex AI (see Authentication) |
+| "Could not load the default credentials" | `GOOGLE_APPLICATION_CREDENTIALS` is unset or points at a missing file |
+| "Permission denied on resource project" | Service account lacks `roles/aiplatform.user`, or `GOOGLE_CLOUD_PROJECT` is wrong |
+| "Rate limit exceeded" | Wait for auto-retry or stay on `gemini-3.8-flash` |
 | "Context too large" | Use `.geminiignore` or be specific |
 | "Tool call failed" | Check JSON stats for details |
 
 ### Debug Mode
 ```bash
-gemini "prompt" --debug -o text
+gemini "prompt" --debug -m gemini-3.8-flash -o text
 ```
 
 ### Error Reports

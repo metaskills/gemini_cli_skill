@@ -8,13 +8,13 @@ The most reliable pattern for quality code generation.
 
 ```bash
 # Step 1: Generate code
-gemini "Create [code description]" --yolo -o text
+gemini "Create [code description]" --yolo -m gemini-3.8-flash -o text
 
 # Step 2: Have Gemini review its own work
-gemini "Review [generated file] for bugs and security issues" -o text
+gemini "Review [generated file] for bugs and security issues" -m gemini-3.8-flash -o text
 
 # Step 3: Fix identified issues
-gemini "Fix these issues in [file]: [list from review]. Apply now." --yolo -o text
+gemini "Fix these issues in [file]: [list from review]. Apply now." --yolo -m gemini-3.8-flash -o text
 ```
 
 ### Why It Works
@@ -25,14 +25,14 @@ gemini "Fix these issues in [file]: [list from review]. Apply now." --yolo -o te
 ### Example
 ```bash
 # Generate
-gemini "Create a user authentication module with bcrypt and JWT" --yolo -o text
+gemini "Create a user authentication module with bcrypt and JWT" --yolo -m gemini-3.8-flash -o text
 
 # Review
-gemini "Review auth.js for security vulnerabilities" -o text
+gemini "Review auth.js for security vulnerabilities" -m gemini-3.8-flash -o text
 # Output: "Found XSS risk, missing input validation, weak JWT secret"
 
 # Fix
-gemini "Fix in auth.js: XSS risk, add input validation, use env var for JWT secret. Apply now." --yolo -o text
+gemini "Fix in auth.js: XSS risk, add input validation, use env var for JWT secret. Apply now." --yolo -m gemini-3.8-flash -o text
 ```
 
 ## Pattern 2: JSON Output for Programmatic Processing
@@ -40,7 +40,7 @@ gemini "Fix in auth.js: XSS risk, add input validation, use env var for JWT secr
 Use JSON output when you need to process results programmatically.
 
 ```bash
-gemini "[prompt]" -o json 2>&1
+gemini "[prompt]" -m gemini-3.8-flash -o json 2>&1
 ```
 
 ### Parsing the Response
@@ -49,7 +49,7 @@ gemini "[prompt]" -o json 2>&1
 // In Node.js or with jq
 const result = JSON.parse(output);
 const content = result.response;
-const tokenUsage = result.stats.models["gemini-2.5-flash"].tokens.total;
+const tokenUsage = result.stats.models["gemini-3.8-flash"].tokens.total;
 const toolCalls = result.stats.tools.byName;
 ```
 
@@ -65,7 +65,7 @@ For long-running tasks, execute in background and continue working.
 
 ```bash
 # Start in background
-gemini "[long task]" --yolo -o text 2>&1 &
+gemini "[long task]" --yolo -m gemini-3.8-flash -o text 2>&1 &
 
 # Get process ID for later
 echo $!
@@ -81,37 +81,35 @@ echo $!
 ### Parallel Execution
 ```bash
 # Run multiple tasks simultaneously
-gemini "Create frontend" --yolo -o text 2>&1 &
-gemini "Create backend" --yolo -o text 2>&1 &
-gemini "Create tests" --yolo -o text 2>&1 &
+gemini "Create frontend" --yolo -m gemini-3.8-flash -o text 2>&1 &
+gemini "Create backend" --yolo -m gemini-3.8-flash -o text 2>&1 &
+gemini "Create tests" --yolo -m gemini-3.8-flash -o text 2>&1 &
 ```
 
 ## Pattern 4: Model Selection Strategy
 
-Choose the right model for the task.
+Two model IDs, nothing else. Always pass `-m` explicitly.
 
 ### Decision Tree
 
 ```
 Is the task complex (architecture, multi-file, deep analysis)?
-├── Yes → Use default (Gemini 3 Pro)
-└── No → Is speed critical?
-    ├── Yes → Use gemini-2.5-flash
-    └── No → Is it trivial (formatting, simple query)?
-        ├── Yes → Use gemini-2.5-flash-lite
-        └── No → Use gemini-2.5-flash
+├── No  → -m gemini-3.8-flash   (the default for everything)
+└── Yes → Does it truly need a Pro model?
+    ├── No  → -m gemini-3.8-flash
+    └── Yes → -m gemini-3-pro-preview
 ```
 
 ### Examples
 ```bash
 # Complex: Architecture analysis
-gemini "Analyze codebase architecture" -o text
+gemini "Analyze codebase architecture" -m gemini-3-pro-preview -o text
 
 # Quick: Simple formatting
-gemini "Format this JSON" -m gemini-2.5-flash -o text
+gemini "Format this JSON" -m gemini-3.8-flash -o text
 
 # Trivial: One-liner
-gemini "What is 2+2?" -m gemini-2.5-flash -o text
+gemini "What is 2+2?" -m gemini-3.8-flash -o text
 ```
 
 ## Pattern 5: Rate Limit Handling
@@ -121,33 +119,32 @@ Strategies for working within rate limits.
 ### Approach 1: Let Auto-Retry Handle It
 Default behavior - CLI retries automatically with backoff.
 
-### Approach 2: Use Flash for Lower Priority
+### Approach 2: Stay on Flash
 ```bash
-# High priority: Use Pro
-gemini "[important task]" --yolo -o text
-
-# Lower priority: Use Flash (different quota)
-gemini "[less critical task]" -m gemini-2.5-flash -o text
+# Default for everything
+gemini "[task]" --yolo -m gemini-3.8-flash -o text
 ```
+
+Reserve `-m gemini-3-pro-preview` for the few tasks that need it - it burns quota faster.
 
 ### Approach 3: Batch Operations
 Combine related operations into single prompts:
 ```bash
 # Instead of multiple calls:
-gemini "Create file A" --yolo
-gemini "Create file B" --yolo
-gemini "Create file C" --yolo
+gemini "Create file A" --yolo -m gemini-3.8-flash
+gemini "Create file B" --yolo -m gemini-3.8-flash
+gemini "Create file C" --yolo -m gemini-3.8-flash
 
 # Single call:
-gemini "Create files A, B, and C with [specs]. Create all now." --yolo
+gemini "Create files A, B, and C with [specs]. Create all now." --yolo -m gemini-3.8-flash
 ```
 
 ### Approach 4: Sequential with Delays
 For automated scripts, add delays:
 ```bash
-gemini "[task 1]" --yolo -o text
+gemini "[task 1]" --yolo -m gemini-3.8-flash -o text
 sleep 2
-gemini "[task 2]" --yolo -o text
+gemini "[task 2]" --yolo -m gemini-3.8-flash -o text
 ```
 
 ## Pattern 6: Context Enrichment
@@ -156,7 +153,7 @@ Provide rich context for better results.
 
 ### Using File References
 ```bash
-gemini "Based on @./package.json and @./src/index.js, suggest improvements" -o text
+gemini "Based on @./package.json and @./src/index.js, suggest improvements" -m gemini-3.8-flash -o text
 ```
 
 ### Using GEMINI.md
@@ -180,7 +177,7 @@ gemini "Given this context:
 - State management: Zustand
 - Styling: Tailwind CSS
 
-Create a user profile component." --yolo -o text
+Create a user profile component." --yolo -m gemini-3.8-flash -o text
 ```
 
 ## Pattern 7: Validation Pipeline
@@ -216,7 +213,7 @@ Always validate Gemini's output before using.
 ### Automated Validation Pattern
 ```bash
 # Generate
-gemini "Create utility functions" --yolo -o text
+gemini "Create utility functions" --yolo -m gemini-3.8-flash -o text
 
 # Validate
 node --check utils.js && eslint utils.js && npm test
@@ -228,16 +225,16 @@ Build complex outputs in stages.
 
 ```bash
 # Stage 1: Core structure
-gemini "Create basic Express server with routes for /api/users" --yolo -o text
+gemini "Create basic Express server with routes for /api/users" --yolo -m gemini-3.8-flash -o text
 
 # Stage 2: Add feature
-gemini "Add authentication middleware to the Express server in server.js" --yolo -o text
+gemini "Add authentication middleware to the Express server in server.js" --yolo -m gemini-3.8-flash -o text
 
 # Stage 3: Add another feature
-gemini "Add rate limiting to the Express server in server.js" --yolo -o text
+gemini "Add rate limiting to the Express server in server.js" --yolo -m gemini-3.8-flash -o text
 
 # Stage 4: Review all
-gemini "Review server.js for issues and optimize" -o text
+gemini "Review server.js for issues and optimize" -m gemini-3.8-flash -o text
 ```
 
 ### Benefits
@@ -253,13 +250,13 @@ Use both AIs for highest quality.
 ```bash
 # 1. Claude writes code (using normal Claude Code tools)
 # 2. Gemini reviews
-gemini "Review this code for bugs and security issues: [paste code]" -o text
+gemini "Review this code for bugs and security issues: [paste code]" -m gemini-3.8-flash -o text
 ```
 
 ### Gemini Generates, Claude Reviews
 ```bash
 # 1. Gemini generates
-gemini "Create [code]" --yolo -o text
+gemini "Create [code]" --yolo -m gemini-3.8-flash -o text
 
 # 2. Claude reviews the output (in conversation)
 # "Review this code that Gemini generated..."
@@ -269,29 +266,71 @@ gemini "Create [code]" --yolo -o text
 - Claude: Strong on reasoning, following complex instructions
 - Gemini: Strong on current web knowledge, codebase investigation
 
-## Pattern 10: Session Continuity
+## Pattern 10: Session Continuity (Agent-to-Agent Threads)
 
-Use sessions for multi-turn workflows.
+Pin a session ID on the first call, then treat Gemini as a collaborator you send messages to. This is the default shape for any task that will take more than one turn.
 
 ```bash
-# Initial task
-gemini "Analyze this codebase architecture" -o text
-# Session saved automatically
+# Open the thread with a fixed ID and all source material attached
+SID=$(uuidgen | tr 'A-Z' 'a-z')
+gemini -p "Read @src/ and map the authentication flow. Report structure only, no code changes." \
+  -m gemini-3.8-flash --session-id "$SID" -o json | jq -r '.response'
 
-# List sessions
-gemini --list-sessions
+# Follow up. No repeated context.
+echo "Which of those paths can be reached without a valid token?" \
+  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
 
-# Continue with follow-up
-echo "What patterns did you find?" | gemini -r 1 -o text
-
-# Further refinement
-echo "Focus on the authentication flow" | gemini -r 1 -o text
+# Keep going as long as the thread is useful
+echo "Write the fix for the two you flagged. Apply now." \
+  | gemini -r "$SID" --yolo -m gemini-3.8-flash -o json | jq -r '.response'
 ```
 
 ### Use Cases
-- Iterative analysis
-- Building on previous context
-- Debugging sessions
+- Iterative analysis where each question depends on the last answer
+- Long-form writing with revision rounds
+- Debugging sessions that accumulate findings
+- Any handoff where re-sending context would cost more than the answer
+
+### Rules
+- Resume by UUID. Index and `latest` drift as new sessions appear.
+- The JSON echoes `session_id` on every turn. Compare it to `$SID` to prove continuity.
+- Never send `--session-id` twice. It starts sessions only and errors on reuse.
+- Start a fresh UUID for an unrelated task instead of polluting a thread.
+
+## Pattern 11: Long-Form Writing Handoff
+
+Writing is the strongest fit for sessions, because revision needs memory of the draft.
+
+```bash
+SID=$(uuidgen | tr 'A-Z' 'a-z')
+
+# Turn 1: brief plus every source, attached once
+gemini -p "You are drafting [document]. Sources: @notes/interview.md, @data/results.csv,
+voice and style rules in @docs/voice.md. Produce an outline first. Do not write prose yet." \
+  -m gemini-3.8-flash --session-id "$SID" -o json | jq -r '.response'
+
+# Turn 2: approve or redirect the outline
+echo "Drop section 4, merge 2 and 3. Now draft the full piece at about 900 words." \
+  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
+
+# Turn 3+: targeted revisions, referencing the draft by section
+echo "The opening buries the finding. Lead with the number and cut the first paragraph." \
+  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
+
+# Final: have it write the file itself
+echo "Write the current draft to ./OUTPUT.md exactly as-is. Do it now." \
+  | gemini -r "$SID" --yolo -m gemini-3.8-flash -o json | jq -r '.response'
+```
+
+### Why Sessions Beat One-Shot Prompts Here
+- Revision instructions stay short ("cut the lede") because the draft is already in context
+- Style and source material are attached once, not re-pasted per turn
+- The outline-then-draft split catches structural problems before prose is written
+- Each turn is a checkpoint, so you can redirect instead of regenerating from scratch
+
+### Watch For
+- History re-sends every turn. Check `stats.models.*.tokens.total` on long threads and start a fresh session with the final draft attached if it bloats.
+- Ask for the artifact to be written to disk on the last turn rather than copying prose out of JSON.
 
 ## Anti-Patterns to Avoid
 
@@ -319,3 +358,13 @@ Extremely long prompts can confuse the model.
 Even with 1M tokens, context can overflow.
 
 **Do**: Use .geminiignore, be specific about files
+
+### Don't: Re-Send Context Instead of Resuming
+Pasting the previous answer back into a fresh call wastes tokens and lets the two copies drift apart.
+
+**Do**: Capture `session_id` and follow up with `-r "$SID"`
+
+### Don't: Resume by Index in a Script
+Indexes renumber every time a session is created, so `-r 1` can hit an unrelated conversation.
+
+**Do**: Always resume by UUID
