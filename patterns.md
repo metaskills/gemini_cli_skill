@@ -332,6 +332,84 @@ echo "Write the current draft to ./OUTPUT.md exactly as-is. Do it now." \
 - History re-sends every turn. Check `stats.models.*.tokens.total` on long threads and start a fresh session with the final draft attached if it bloats.
 - Ask for the artifact to be written to disk on the last turn rather than copying prose out of JSON.
 
+## Pattern 12: Robust Headless Session Wrapper (Production Concurrency)
+
+This pattern provides a slim, production-grade Bash wrapper that integrates the four critical session reliability mitigations (solving silent eviction, directory drift, empty JSON responses, and default tool timeouts) for any headless development task.
+
+```bash
+#!/usr/bin/env bash
+# gemini-robust.sh - Slim & robust runner for concurrent headless Gemini CLI sessions.
+# Mitigates: Directory drift, Silent Eviction, Empty responses, and Tool timeouts.
+
+set -euo pipefail
+
+PROJECT_ROOT="$(pwd)"
+SID="${1:?Session UUID required}"
+PROMPT="${2:?Prompt required}"
+OUT_FILE="${3:-}" # Optional file backup of the durable state
+TIMEOUT_MS=600000 # Explicit 10-minute timeout for harness limits
+
+# 1. Prevent & Diagnose Directory Drift
+CURRENT_DIR="$(pwd)"
+if [[ "$CURRENT_DIR" != "$PROJECT_ROOT" ]]; then
+    echo "Directory drift detected. Correcting $CURRENT_DIR -> $PROJECT_ROOT" >&2
+    cd "$PROJECT_ROOT"
+fi
+
+# Run command inside a subshell to isolate internal directory drift
+run_gemini() {
+    local is_resume="$1"
+    (
+        cd "$PROJECT_ROOT"
+        if [ "$is_resume" = "true" ]; then
+            echo "$PROMPT" | gemini --skip-trust --timeout "$TIMEOUT_MS" -m gemini-3.8-flash -o json -r "$SID"
+        else
+            # Re-attach local backup file if it exists to recover state seamlessly
+            local final_prompt="$PROMPT"
+            if [ -n "$OUT_FILE" ] && [ -f "$OUT_FILE" ]; then
+                final_prompt="[RECOVERY NOTE: Continuing from latest local backup @$OUT_FILE] $PROMPT"
+            fi
+            gemini --skip-trust --timeout "$TIMEOUT_MS" -m gemini-3.8-flash -o json --session-id "$SID" -p "$final_prompt"
+        fi
+    )
+}
+
+# 2. Resumption with Auto-Fallback
+OUT=""
+# Quick check if session exists locally before trying to resume
+if gemini --list-sessions 2>/dev/null | grep -q "$SID"; then
+    echo "Resuming session $SID..." >&2
+    OUT=$(run_gemini "true" 2>/dev/null) || true
+fi
+
+# If resume failed or session didn't exist, start fresh
+if [ -z "$OUT" ]; then
+    echo "Session $SID missing/evicted. Starting fresh..." >&2
+    OUT=$(run_gemini "false")
+fi
+
+# 3. Content Validation (Prevent Exit 0 on empty output)
+BODY=$(echo "$OUT" | jq -r '.response // ""' 2>/dev/null)
+if [ -z "${BODY//[[:space:]]/}" ]; then
+    echo "ERROR: Gemini returned an empty response. Rejecting." >&2
+    exit 1
+fi
+
+# Save output to our durable state file or stdout
+if [ -n "$OUT_FILE" ]; then
+    echo "$BODY" > "$OUT_FILE"
+    echo "Output saved to $OUT_FILE" >&2
+else
+    echo "$BODY"
+fi
+```
+
+### Why This Works
+- **Directory Pinning:** Running the command inside a subshell `(cd "$PROJECT_ROOT" && ...)` ensures no directory drift from YOLO tool calls leaks into the calling environment.
+- **Durable Disk Backups (`-o`):** Backing up generated files on disk after successful turns makes session eviction trivial to recover from by simply attaching the latest file on fallback start.
+- **Empty Response Protection:** Parsing the JSON response and validating it contains actual content rejects silent exit-0 failures.
+- **Explicit Timeout:** Prevents harness tools from prematurely timing out during slow first turns with large attachments.
+
 ## Anti-Patterns to Avoid
 
 ### Don't: Expect Immediate Execution

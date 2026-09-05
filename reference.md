@@ -359,6 +359,10 @@ In interactive mode, prefix with `!`:
 | "Rate limit exceeded" | Wait for auto-retry or stay on `gemini-3.8-flash` |
 | "Context too large" | Use `.geminiignore` or be specific |
 | "Tool call failed" | Check JSON stats for details |
+| "No previous sessions found" (concurrent eviction) | Keep durable state in files on disk. Fall back to fresh session and re-attach file state on failure. |
+| Resume fails due to directory drift under `--yolo` | Under `--yolo`, tool calls can change parent directory. Check `pwd`. Pin directory: `(cd "$PROJECT_ROOT" && gemini ...)`. |
+| Exit 0 with empty `.response` in JSON | Check response content, not just exit code. Treat empty response as a dead session and start fresh. |
+| Killed/detached at 120s by driving tool | Set explicit long timeout (up to 10m/600,000ms) on shell execution, or background and poll. |
 
 ### Debug Mode
 ```bash

@@ -151,6 +151,30 @@ gemini --list-sessions   # prints "1. First prompt (2 minutes ago) [uuid]"
 - **Watch the token growth.** Each turn re-sends the whole history. Read `stats.models.*.tokens.total` on long threads.
 - **One session per job.** Do not mix an unrelated task into a session; start a new UUID.
 
+## Headless & Concurrent Session Reliability
+
+When running Gemini CLI in headless environments (like concurrent multi-agent setups or CI/CD pipelines), sessions are susceptible to four distinct silent failure modes:
+
+### 1. Silent Session Eviction
+* **Symptom:** Resuming a session fails with `Error resuming session: No previous sessions found for this project`.
+* **Cause:** The session store (`~/.gemini/tmp/<hash>/chats`) is scoped per-project directory. Concurrent multi-agent execution causes write races or cache pruning.
+* **Mitigation:** Treat session IDs as transient caches rather than durable state handles. After each turn, write the approved code/document to disk. On resume failure, automatically fall back to a fresh session, re-attaching the source files, prompt, and the disk backup.
+
+### 2. Working Directory Drift
+* **Symptom:** Resuming a session fails, and the error lists a different subdirectory where it searched for sessions.
+* **Cause:** Under `--yolo` (`-y`), Gemini's tool calls are auto-approved. A tool call that changes directory (e.g. `cd`) shifts the shell's working directory.
+* **Mitigation:** Check `pwd` before concluding a session is gone. Pin the working directory on every call using a subshell: `(cd "$PROJECT_ROOT" && gemini ...)` or use absolute paths for `@` file attachments. Avoid using `--yolo` for calls that only return text.
+
+### 3. Quiet Exit 0 with Empty Response
+* **Symptom:** Command succeeds (exit `0`) and returns valid JSON, but `.response` is empty or whitespace-only.
+* **Cause:** Attempting to resume an evicted/dead session, or backend truncation.
+* **Mitigation:** Check response content (not just exit status) on any call whose output you keep. Parse JSON and ensure `.response` is populated. Treat empty responses as dead sessions: start a fresh session with re-anchored content.
+
+### 4. Driving Harness Timeout
+* **Symptom:** Calls are killed or detached at 120 seconds (the driving tool's default timeout).
+* **Cause:** First turns that attach multiple source files or index large repositories are slow.
+* **Mitigation:** Set an explicit timeout (up to 10 minutes/600,000ms) on the driving tool's shell command. Alternatively, run the call in the background and poll for completion. Prefer fewer, larger turns to avoid re-attaching files.
+
 ## Attaching Files
 
 Reference a file with `@path` inside the prompt. This works in headless mode and covers more than text:

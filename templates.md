@@ -152,6 +152,8 @@ Output in [Markdown/OpenAPI] format." --yolo -m gemini-3.8-flash -o text
 
 Templates for work that needs follow-ups. Open with `--session-id`, continue with `-r "$SID"`.
 
+*Note: In concurrent headless runs, sessions are prone to silent eviction or working directory drift. Always pin directories, handle timeouts explicitly, and verify responses are not empty. See `patterns.md` (Pattern 12) for a robust production wrapper.*
+
 ### Session Opener (Attach Everything Once)
 ```bash
 SID=$(uuidgen | tr 'A-Z' 'a-z')
