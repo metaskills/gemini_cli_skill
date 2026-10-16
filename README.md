@@ -110,7 +110,7 @@ Ready-to-use templates for:
 - **File Attachments** - `@path` for text, images, PDFs, and whole directories
 - **Generate-Review-Fix** - Quality assurance cycle
 - **Background Execution** - Parallel task processing
-- **Model Selection** - `gemini-3.8-flash` by default, `gemini-3-pro-preview` only when needed
+- **Model Selection** - `gemini-4-argon` by default, `gemini-3.8-flash` as a fallback only
 - **Rate Limit Handling** - Strategies for free tier limits
 
 ### Gemini's Unique Tools
@@ -123,24 +123,24 @@ Ready-to-use templates for:
 
 ```bash
 # Basic generation
-gemini "Create [description]" --yolo -m gemini-3.8-flash -o text
+gemini "Create [description]" --yolo -m gemini-4-argon -o text
 
 # Code review
-gemini "Review [file] for bugs and security issues" -m gemini-3.8-flash -o text
+gemini "Review [file] for bugs and security issues" -m gemini-4-argon -o text
 
 # Web research
-gemini "What's new in [topic]? Use Google Search." -m gemini-3.8-flash -o text
+gemini "What's new in [topic]? Use Google Search." -m gemini-4-argon -o text
 
 # Architecture analysis
-gemini "Use codebase_investigator to analyze this project" -m gemini-3.8-flash -o text
+gemini "Use codebase_investigator to analyze this project" -m gemini-4-argon -o text
 
-# Pro model, only when a task genuinely needs it
-gemini "[prompt]" -m gemini-3-pro-preview -o text
+# Fallback, only when argon is rate-limited or unavailable
+gemini "[prompt]" -m gemini-3.8-flash -o text
 
 # Multi-turn thread with attachments
 SID=$(uuidgen | tr 'A-Z' 'a-z')
-gemini -p "Draft from @notes.md" -m gemini-3.8-flash --session-id "$SID" -o json
-echo "Tighten the opening" | gemini -r "$SID" -m gemini-3.8-flash -o json
+gemini -p "Draft from @notes.md" -m gemini-4-argon --session-id "$SID" -o json
+echo "Tighten the opening" | gemini -r "$SID" -m gemini-4-argon -o json
 ```
 
 ## Why Use Gemini from Claude Code?

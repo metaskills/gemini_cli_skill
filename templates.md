@@ -6,32 +6,32 @@ Reusable prompt templates for common operations.
 
 ### Single-File Application
 ```bash
-gemini "Create a [description] with [features]. Include [requirements]. Output the complete file content." --yolo -m gemini-3.8-flash -o text
+gemini "Create a [description] with [features]. Include [requirements]. Output the complete file content." --yolo -m gemini-4-argon -o text
 ```
 
 **Example:**
 ```bash
-gemini "Create a single-file HTML/CSS/JS calculator with: basic operations, history display, keyboard support, dark mode toggle, responsive design. Output the complete file content." --yolo -m gemini-3.8-flash -o text
+gemini "Create a single-file HTML/CSS/JS calculator with: basic operations, history display, keyboard support, dark mode toggle, responsive design. Output the complete file content." --yolo -m gemini-4-argon -o text
 ```
 
 ### Multi-File Project
 ```bash
-gemini "Create a [project type] with [stack]. Include [features]. Create all necessary files and make it runnable. Use modern best practices. START BUILDING NOW." --yolo -m gemini-3.8-flash -o text
+gemini "Create a [project type] with [stack]. Include [features]. Create all necessary files and make it runnable. Use modern best practices. START BUILDING NOW." --yolo -m gemini-4-argon -o text
 ```
 
 **Example:**
 ```bash
-gemini "Create a REST API with Express, SQLite, and JWT auth. Include user CRUD, input validation, error handling. Create all necessary files and make it runnable. START BUILDING NOW." --yolo -m gemini-3.8-flash -o text
+gemini "Create a REST API with Express, SQLite, and JWT auth. Include user CRUD, input validation, error handling. Create all necessary files and make it runnable. START BUILDING NOW." --yolo -m gemini-4-argon -o text
 ```
 
 ### Component/Module
 ```bash
-gemini "Create a [component type] that [functionality]. Follow [standards]. Include [requirements]. Output the code." --yolo -m gemini-3.8-flash -o text
+gemini "Create a [component type] that [functionality]. Follow [standards]. Include [requirements]. Output the code." --yolo -m gemini-4-argon -o text
 ```
 
 **Example:**
 ```bash
-gemini "Create a React hook useLocalStorage that syncs state with localStorage. Follow React 18 best practices. Include TypeScript types. Output the code." --yolo -m gemini-3.8-flash -o text
+gemini "Create a React hook useLocalStorage that syncs state with localStorage. Follow React 18 best practices. Include TypeScript types. Output the code." --yolo -m gemini-4-argon -o text
 ```
 
 ## Code Review
@@ -42,7 +42,7 @@ gemini "Review [file] and tell me:
 1) What features it has
 2) Any bugs or security issues
 3) Suggestions for improvement
-4) Code quality assessment" -m gemini-3.8-flash -o text
+4) Code quality assessment" -m gemini-4-argon -o text
 ```
 
 ### Security-Focused Review
@@ -53,7 +53,7 @@ gemini "Review [file] for security vulnerabilities including:
 - Command injection
 - Insecure data handling
 - Authentication issues
-Report findings with severity levels." -m gemini-3.8-flash -o text
+Report findings with severity levels." -m gemini-4-argon -o text
 ```
 
 ### Performance Review
@@ -64,7 +64,7 @@ gemini "Analyze [file] for performance issues:
 - Unnecessary re-renders
 - Blocking operations
 - Optimization opportunities
-Provide specific recommendations." -m gemini-3.8-flash -o text
+Provide specific recommendations." -m gemini-4-argon -o text
 ```
 
 ## Bug Fixing
@@ -75,12 +75,12 @@ gemini "Fix these bugs in [file]:
 1) [Bug description]
 2) [Bug description]
 3) [Bug description]
-Apply fixes now." --yolo -m gemini-3.8-flash -o text
+Apply fixes now." --yolo -m gemini-4-argon -o text
 ```
 
 ### Auto-Detect and Fix
 ```bash
-gemini "Analyze [file] for bugs, then fix all issues you find. Apply fixes immediately." --yolo -m gemini-3.8-flash -o text
+gemini "Analyze [file] for bugs, then fix all issues you find. Apply fixes immediately." --yolo -m gemini-4-argon -o text
 ```
 
 ## Test Generation
@@ -92,7 +92,7 @@ gemini "Generate [framework] unit tests for [file]. Cover:
 - Edge cases
 - Error handling
 - [Specific areas]
-Output the complete test file." --yolo -m gemini-3.8-flash -o text
+Output the complete test file." --yolo -m gemini-4-argon -o text
 ```
 
 **Example:**
@@ -102,7 +102,7 @@ gemini "Generate Jest unit tests for utils.js. Cover:
 - Edge cases (empty input, null, undefined)
 - Error handling
 - Boundary conditions
-Output the complete test file." --yolo -m gemini-3.8-flash -o text
+Output the complete test file." --yolo -m gemini-4-argon -o text
 ```
 
 ### Integration Tests
@@ -111,7 +111,7 @@ gemini "Generate integration tests for [component/API]. Test:
 - Happy path scenarios
 - Error scenarios
 - Edge cases
-Use [framework]. Output complete test file." --yolo -m gemini-3.8-flash -o text
+Use [framework]. Output complete test file." --yolo -m gemini-4-argon -o text
 ```
 
 ## Documentation
@@ -123,7 +123,7 @@ gemini "Generate [JSDoc/TSDoc] documentation for all functions in [file]. Includ
 - Parameter types and descriptions
 - Return types and descriptions
 - Usage examples
-Output as [format]." --yolo -m gemini-3.8-flash -o text
+Output as [format]." --yolo -m gemini-4-argon -o text
 ```
 
 ### README Generation
@@ -134,7 +134,7 @@ gemini "Generate a README.md for this project. Include:
 - Usage examples
 - API reference
 - Contributing guidelines
-Use the codebase to gather accurate information." --yolo -m gemini-3.8-flash -o text
+Use the codebase to gather accurate information." --yolo -m gemini-4-argon -o text
 ```
 
 ### API Documentation
@@ -145,7 +145,7 @@ gemini "Document all API endpoints in [file/directory]. Include:
 - Request body schema
 - Response schema
 - Example requests/responses
-Output in [Markdown/OpenAPI] format." --yolo -m gemini-3.8-flash -o text
+Output in [Markdown/OpenAPI] format." --yolo -m gemini-4-argon -o text
 ```
 
 ## Multi-Turn Sessions
@@ -159,13 +159,13 @@ Templates for work that needs follow-ups. Open with `--session-id`, continue wit
 SID=$(uuidgen | tr 'A-Z' 'a-z')
 gemini -p "[task]. Source material: @[file1], @[file2]. Style rules: @[file3].
 Produce [first deliverable] only. Stop there and wait for direction." \
-  -m gemini-3.8-flash --session-id "$SID" -o json | jq -r '.response'
+  -m gemini-4-argon --session-id "$SID" -o json | jq -r '.response'
 ```
 
 ### Follow-Up (Keep It Short)
 ```bash
 echo "[targeted change, referencing the draft by section or line]" \
-  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" -m gemini-4-argon -o json | jq -r '.response'
 ```
 
 Do not restate the task or re-attach files. The session already has them.
@@ -175,40 +175,40 @@ Do not restate the task or re-attach files. The session already has them.
 # 1. Outline
 gemini -p "Draft [document] for [audience]. Sources: @[notes], @[data].
 Voice: @[voice.md]. Return an outline with section word budgets. No prose yet." \
-  -m gemini-3.8-flash --session-id "$SID" -o json | jq -r '.response'
+  -m gemini-4-argon --session-id "$SID" -o json | jq -r '.response'
 
 # 2. Draft against the approved outline
 echo "Outline approved with [changes]. Write the full draft." \
-  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" -m gemini-4-argon -o json | jq -r '.response'
 
 # 3. Revise
 echo "[specific critique]. Revise only that section." \
-  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" -m gemini-4-argon -o json | jq -r '.response'
 
 # 4. Land it on disk
 echo "Write the current draft to [path] verbatim. Do it now." \
-  | gemini -r "$SID" --yolo -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" --yolo -m gemini-4-argon -o json | jq -r '.response'
 ```
 
 ### Staged Review Thread
 ```bash
 gemini -p "Review @[file] for correctness only. List findings, do not fix anything." \
-  -m gemini-3.8-flash --session-id "$SID" -o json | jq -r '.response'
+  -m gemini-4-argon --session-id "$SID" -o json | jq -r '.response'
 
 echo "Now review the same file for security. Do not repeat earlier findings." \
-  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" -m gemini-4-argon -o json | jq -r '.response'
 
 echo "Fix findings 2 and 5 only. Apply now." \
-  | gemini -r "$SID" --yolo -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" --yolo -m gemini-4-argon -o json | jq -r '.response'
 ```
 
 ### Multimodal Input
 ```bash
 gemini -p "Turn the whiteboard photo @[image.png] into a markdown spec." \
-  -m gemini-3.8-flash --session-id "$SID" -o json | jq -r '.response'
+  -m gemini-4-argon --session-id "$SID" -o json | jq -r '.response'
 
 gemini -p "Extract every requirement from @[doc.pdf] as a checklist." \
-  -m gemini-3.8-flash --session-id "$SID" -o json | jq -r '.response'
+  -m gemini-4-argon --session-id "$SID" -o json | jq -r '.response'
 ```
 
 ## Code Transformation
@@ -218,7 +218,7 @@ gemini -p "Extract every requirement from @[doc.pdf] as a checklist." \
 gemini "Refactor [file] to:
 - [Specific improvement]
 - [Specific improvement]
-Maintain all existing functionality. Apply changes now." --yolo -m gemini-3.8-flash -o text
+Maintain all existing functionality. Apply changes now." --yolo -m gemini-4-argon -o text
 ```
 
 ### Language Translation
@@ -227,19 +227,19 @@ gemini "Translate [file] from [source language] to [target language]. Maintain:
 - Same functionality
 - Similar code structure
 - Idiomatic patterns for target language
-Output the translated code." --yolo -m gemini-3.8-flash -o text
+Output the translated code." --yolo -m gemini-4-argon -o text
 ```
 
 ### Framework Migration
 ```bash
-gemini "Convert [file] from [old framework] to [new framework]. Maintain all functionality. Use [new framework] best practices. Output the converted code." --yolo -m gemini-3.8-flash -o text
+gemini "Convert [file] from [old framework] to [new framework]. Maintain all functionality. Use [new framework] best practices. Output the converted code." --yolo -m gemini-4-argon -o text
 ```
 
 ## Web Research
 
 ### Current Information
 ```bash
-gemini "What are the latest [topic] as of [date]? Use Google Search to find current information. Summarize key points." -m gemini-3.8-flash -o text
+gemini "What are the latest [topic] as of [date]? Use Google Search to find current information. Summarize key points." -m gemini-4-argon -o text
 ```
 
 ### Library/API Research
@@ -249,12 +249,12 @@ gemini "Research [library/API] and provide:
 - Best practices
 - Common patterns
 - Gotchas to avoid
-Use Google Search for current information." -m gemini-3.8-flash -o text
+Use Google Search for current information." -m gemini-4-argon -o text
 ```
 
 ### Comparison Research
 ```bash
-gemini "Compare [option A] vs [option B] for [use case]. Use Google Search for current benchmarks and community opinions. Provide recommendation." -m gemini-3.8-flash -o text
+gemini "Compare [option A] vs [option B] for [use case]. Use Google Search for current benchmarks and community opinions. Provide recommendation." -m gemini-4-argon -o text
 ```
 
 ## Architecture Analysis
@@ -265,7 +265,7 @@ gemini "Use the codebase_investigator tool to analyze this project. Report on:
 - Overall architecture
 - Key dependencies
 - Component relationships
-- Potential issues" -m gemini-3.8-flash -o text
+- Potential issues" -m gemini-4-argon -o text
 ```
 
 ### Dependency Analysis
@@ -275,14 +275,14 @@ gemini "Analyze dependencies in this project:
 - Outdated packages
 - Security vulnerabilities
 - Bundle size impact
-Use available tools to gather information." -m gemini-3.8-flash -o text
+Use available tools to gather information." -m gemini-4-argon -o text
 ```
 
 ## Specialized Tasks
 
 ### Git Commit Message
 ```bash
-gemini "Analyze staged changes and generate a commit message following conventional commits format. Be concise but descriptive." -m gemini-3.8-flash -o text
+gemini "Analyze staged changes and generate a commit message following conventional commits format. Be concise but descriptive." -m gemini-4-argon -o text
 ```
 
 ### Code Explanation
@@ -291,7 +291,7 @@ gemini "Explain what [file/function] does in detail:
 - Purpose and use case
 - How it works step by step
 - Key algorithms/patterns used
-- Dependencies and side effects" -m gemini-3.8-flash -o text
+- Dependencies and side effects" -m gemini-4-argon -o text
 ```
 
 ### Error Diagnosis
@@ -302,7 +302,7 @@ Context: [relevant context]
 Provide:
 - Root cause
 - Solution steps
-- Prevention tips" -m gemini-3.8-flash -o text
+- Prevention tips" -m gemini-4-argon -o text
 ```
 
 ## Template Variables

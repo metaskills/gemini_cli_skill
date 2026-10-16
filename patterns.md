@@ -8,13 +8,13 @@ The most reliable pattern for quality code generation.
 
 ```bash
 # Step 1: Generate code
-gemini "Create [code description]" --yolo -m gemini-3.8-flash -o text
+gemini "Create [code description]" --yolo -m gemini-4-argon -o text
 
 # Step 2: Have Gemini review its own work
-gemini "Review [generated file] for bugs and security issues" -m gemini-3.8-flash -o text
+gemini "Review [generated file] for bugs and security issues" -m gemini-4-argon -o text
 
 # Step 3: Fix identified issues
-gemini "Fix these issues in [file]: [list from review]. Apply now." --yolo -m gemini-3.8-flash -o text
+gemini "Fix these issues in [file]: [list from review]. Apply now." --yolo -m gemini-4-argon -o text
 ```
 
 ### Why It Works
@@ -25,14 +25,14 @@ gemini "Fix these issues in [file]: [list from review]. Apply now." --yolo -m ge
 ### Example
 ```bash
 # Generate
-gemini "Create a user authentication module with bcrypt and JWT" --yolo -m gemini-3.8-flash -o text
+gemini "Create a user authentication module with bcrypt and JWT" --yolo -m gemini-4-argon -o text
 
 # Review
-gemini "Review auth.js for security vulnerabilities" -m gemini-3.8-flash -o text
+gemini "Review auth.js for security vulnerabilities" -m gemini-4-argon -o text
 # Output: "Found XSS risk, missing input validation, weak JWT secret"
 
 # Fix
-gemini "Fix in auth.js: XSS risk, add input validation, use env var for JWT secret. Apply now." --yolo -m gemini-3.8-flash -o text
+gemini "Fix in auth.js: XSS risk, add input validation, use env var for JWT secret. Apply now." --yolo -m gemini-4-argon -o text
 ```
 
 ## Pattern 2: JSON Output for Programmatic Processing
@@ -40,7 +40,7 @@ gemini "Fix in auth.js: XSS risk, add input validation, use env var for JWT secr
 Use JSON output when you need to process results programmatically.
 
 ```bash
-gemini "[prompt]" -m gemini-3.8-flash -o json 2>&1
+gemini "[prompt]" -m gemini-4-argon -o json 2>&1
 ```
 
 ### Parsing the Response
@@ -49,7 +49,7 @@ gemini "[prompt]" -m gemini-3.8-flash -o json 2>&1
 // In Node.js or with jq
 const result = JSON.parse(output);
 const content = result.response;
-const tokenUsage = result.stats.models["gemini-3.8-flash"].tokens.total;
+const tokenUsage = result.stats.models["gemini-4-argon"].tokens.total;
 const toolCalls = result.stats.tools.byName;
 ```
 
@@ -65,7 +65,7 @@ For long-running tasks, execute in background and continue working.
 
 ```bash
 # Start in background
-gemini "[long task]" --yolo -m gemini-3.8-flash -o text 2>&1 &
+gemini "[long task]" --yolo -m gemini-4-argon -o text 2>&1 &
 
 # Get process ID for later
 echo $!
@@ -81,9 +81,9 @@ echo $!
 ### Parallel Execution
 ```bash
 # Run multiple tasks simultaneously
-gemini "Create frontend" --yolo -m gemini-3.8-flash -o text 2>&1 &
-gemini "Create backend" --yolo -m gemini-3.8-flash -o text 2>&1 &
-gemini "Create tests" --yolo -m gemini-3.8-flash -o text 2>&1 &
+gemini "Create frontend" --yolo -m gemini-4-argon -o text 2>&1 &
+gemini "Create backend" --yolo -m gemini-4-argon -o text 2>&1 &
+gemini "Create tests" --yolo -m gemini-4-argon -o text 2>&1 &
 ```
 
 ## Pattern 4: Model Selection Strategy
@@ -93,23 +93,21 @@ Two model IDs, nothing else. Always pass `-m` explicitly.
 ### Decision Tree
 
 ```
-Is the task complex (architecture, multi-file, deep analysis)?
-├── No  → -m gemini-3.8-flash   (the default for everything)
-└── Yes → Does it truly need a Pro model?
-    ├── No  → -m gemini-3.8-flash
-    └── Yes → -m gemini-3-pro-preview
+Is gemini-4-argon available (not rate-limited or erroring)?
+├── Yes → -m gemini-4-argon    (the default for everything)
+└── No  → -m gemini-3.8-flash  (fallback only)
 ```
 
 ### Examples
 ```bash
 # Complex: Architecture analysis
-gemini "Analyze codebase architecture" -m gemini-3-pro-preview -o text
+gemini "Analyze codebase architecture" -m gemini-4-argon -o text
 
 # Quick: Simple formatting
-gemini "Format this JSON" -m gemini-3.8-flash -o text
+gemini "Format this JSON" -m gemini-4-argon -o text
 
 # Trivial: One-liner
-gemini "What is 2+2?" -m gemini-3.8-flash -o text
+gemini "What is 2+2?" -m gemini-4-argon -o text
 ```
 
 ## Pattern 5: Rate Limit Handling
@@ -119,32 +117,32 @@ Strategies for working within rate limits.
 ### Approach 1: Let Auto-Retry Handle It
 Default behavior - CLI retries automatically with backoff.
 
-### Approach 2: Stay on Flash
+### Approach 2: Fall Back to Flash
 ```bash
-# Default for everything
+# Only after argon keeps hitting rate limits
 gemini "[task]" --yolo -m gemini-3.8-flash -o text
 ```
 
-Reserve `-m gemini-3-pro-preview` for the few tasks that need it - it burns quota faster.
+Switch back to `-m gemini-4-argon` once the limit clears.
 
 ### Approach 3: Batch Operations
 Combine related operations into single prompts:
 ```bash
 # Instead of multiple calls:
-gemini "Create file A" --yolo -m gemini-3.8-flash
-gemini "Create file B" --yolo -m gemini-3.8-flash
-gemini "Create file C" --yolo -m gemini-3.8-flash
+gemini "Create file A" --yolo -m gemini-4-argon
+gemini "Create file B" --yolo -m gemini-4-argon
+gemini "Create file C" --yolo -m gemini-4-argon
 
 # Single call:
-gemini "Create files A, B, and C with [specs]. Create all now." --yolo -m gemini-3.8-flash
+gemini "Create files A, B, and C with [specs]. Create all now." --yolo -m gemini-4-argon
 ```
 
 ### Approach 4: Sequential with Delays
 For automated scripts, add delays:
 ```bash
-gemini "[task 1]" --yolo -m gemini-3.8-flash -o text
+gemini "[task 1]" --yolo -m gemini-4-argon -o text
 sleep 2
-gemini "[task 2]" --yolo -m gemini-3.8-flash -o text
+gemini "[task 2]" --yolo -m gemini-4-argon -o text
 ```
 
 ## Pattern 6: Context Enrichment
@@ -153,7 +151,7 @@ Provide rich context for better results.
 
 ### Using File References
 ```bash
-gemini "Based on @./package.json and @./src/index.js, suggest improvements" -m gemini-3.8-flash -o text
+gemini "Based on @./package.json and @./src/index.js, suggest improvements" -m gemini-4-argon -o text
 ```
 
 ### Using GEMINI.md
@@ -177,7 +175,7 @@ gemini "Given this context:
 - State management: Zustand
 - Styling: Tailwind CSS
 
-Create a user profile component." --yolo -m gemini-3.8-flash -o text
+Create a user profile component." --yolo -m gemini-4-argon -o text
 ```
 
 ## Pattern 7: Validation Pipeline
@@ -213,7 +211,7 @@ Always validate Gemini's output before using.
 ### Automated Validation Pattern
 ```bash
 # Generate
-gemini "Create utility functions" --yolo -m gemini-3.8-flash -o text
+gemini "Create utility functions" --yolo -m gemini-4-argon -o text
 
 # Validate
 node --check utils.js && eslint utils.js && npm test
@@ -225,16 +223,16 @@ Build complex outputs in stages.
 
 ```bash
 # Stage 1: Core structure
-gemini "Create basic Express server with routes for /api/users" --yolo -m gemini-3.8-flash -o text
+gemini "Create basic Express server with routes for /api/users" --yolo -m gemini-4-argon -o text
 
 # Stage 2: Add feature
-gemini "Add authentication middleware to the Express server in server.js" --yolo -m gemini-3.8-flash -o text
+gemini "Add authentication middleware to the Express server in server.js" --yolo -m gemini-4-argon -o text
 
 # Stage 3: Add another feature
-gemini "Add rate limiting to the Express server in server.js" --yolo -m gemini-3.8-flash -o text
+gemini "Add rate limiting to the Express server in server.js" --yolo -m gemini-4-argon -o text
 
 # Stage 4: Review all
-gemini "Review server.js for issues and optimize" -m gemini-3.8-flash -o text
+gemini "Review server.js for issues and optimize" -m gemini-4-argon -o text
 ```
 
 ### Benefits
@@ -250,13 +248,13 @@ Use both AIs for highest quality.
 ```bash
 # 1. Claude writes code (using normal Claude Code tools)
 # 2. Gemini reviews
-gemini "Review this code for bugs and security issues: [paste code]" -m gemini-3.8-flash -o text
+gemini "Review this code for bugs and security issues: [paste code]" -m gemini-4-argon -o text
 ```
 
 ### Gemini Generates, Claude Reviews
 ```bash
 # 1. Gemini generates
-gemini "Create [code]" --yolo -m gemini-3.8-flash -o text
+gemini "Create [code]" --yolo -m gemini-4-argon -o text
 
 # 2. Claude reviews the output (in conversation)
 # "Review this code that Gemini generated..."
@@ -274,15 +272,15 @@ Pin a session ID on the first call, then treat Gemini as a collaborator you send
 # Open the thread with a fixed ID and all source material attached
 SID=$(uuidgen | tr 'A-Z' 'a-z')
 gemini -p "Read @src/ and map the authentication flow. Report structure only, no code changes." \
-  -m gemini-3.8-flash --session-id "$SID" -o json | jq -r '.response'
+  -m gemini-4-argon --session-id "$SID" -o json | jq -r '.response'
 
 # Follow up. No repeated context.
 echo "Which of those paths can be reached without a valid token?" \
-  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" -m gemini-4-argon -o json | jq -r '.response'
 
 # Keep going as long as the thread is useful
 echo "Write the fix for the two you flagged. Apply now." \
-  | gemini -r "$SID" --yolo -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" --yolo -m gemini-4-argon -o json | jq -r '.response'
 ```
 
 ### Use Cases
@@ -307,19 +305,19 @@ SID=$(uuidgen | tr 'A-Z' 'a-z')
 # Turn 1: brief plus every source, attached once
 gemini -p "You are drafting [document]. Sources: @notes/interview.md, @data/results.csv,
 voice and style rules in @docs/voice.md. Produce an outline first. Do not write prose yet." \
-  -m gemini-3.8-flash --session-id "$SID" -o json | jq -r '.response'
+  -m gemini-4-argon --session-id "$SID" -o json | jq -r '.response'
 
 # Turn 2: approve or redirect the outline
 echo "Drop section 4, merge 2 and 3. Now draft the full piece at about 900 words." \
-  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" -m gemini-4-argon -o json | jq -r '.response'
 
 # Turn 3+: targeted revisions, referencing the draft by section
 echo "The opening buries the finding. Lead with the number and cut the first paragraph." \
-  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" -m gemini-4-argon -o json | jq -r '.response'
 
 # Final: have it write the file itself
 echo "Write the current draft to ./OUTPUT.md exactly as-is. Do it now." \
-  | gemini -r "$SID" --yolo -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" --yolo -m gemini-4-argon -o json | jq -r '.response'
 ```
 
 ### Why Sessions Beat One-Shot Prompts Here
@@ -362,14 +360,14 @@ run_gemini() {
     (
         cd "$PROJECT_ROOT"
         if [ "$is_resume" = "true" ]; then
-            echo "$PROMPT" | gemini --skip-trust --timeout "$TIMEOUT_MS" -m gemini-3.8-flash -o json -r "$SID"
+            echo "$PROMPT" | gemini --skip-trust --timeout "$TIMEOUT_MS" -m gemini-4-argon -o json -r "$SID"
         else
             # Re-attach local backup file if it exists to recover state seamlessly
             local final_prompt="$PROMPT"
             if [ -n "$OUT_FILE" ] && [ -f "$OUT_FILE" ]; then
                 final_prompt="[RECOVERY NOTE: Continuing from latest local backup @$OUT_FILE] $PROMPT"
             fi
-            gemini --skip-trust --timeout "$TIMEOUT_MS" -m gemini-3.8-flash -o json --session-id "$SID" -p "$final_prompt"
+            gemini --skip-trust --timeout "$TIMEOUT_MS" -m gemini-4-argon -o json --session-id "$SID" -p "$final_prompt"
         fi
     )
 }

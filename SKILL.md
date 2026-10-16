@@ -5,14 +5,14 @@ description: Wield Google's Gemini CLI as a powerful auxiliary tool for code gen
 
 # Gemini CLI Integration Skill
 
-This skill enables Claude Code to effectively orchestrate Gemini CLI (verified against v0.58.0) for code generation, review, analysis, and multi-turn delegation.
+This skill enables Claude Code to effectively orchestrate Gemini CLI (verified against v0.64.0) for code generation, review, analysis, and multi-turn delegation.
 
 ## Model Rule (Mandatory)
 
 Every `gemini` invocation must pass `-m` explicitly. Only two model IDs are permitted:
 
-- `gemini-3.8-flash` - the default, use it for everything
-- `gemini-3-pro-preview` - only when a Pro model is genuinely required
+- `gemini-4-argon` - the default, use it for everything
+- `gemini-3.8-flash` - fallback only, when `gemini-4-argon` is rate-limited or unavailable
 
 Never omit `-m` and never use any other model ID.
 
@@ -68,14 +68,14 @@ command -v gemini || which gemini
 ### 2. Basic Command Pattern
 
 ```bash
-gemini "[prompt]" --yolo -m gemini-3.8-flash -o text 2>&1
+gemini "[prompt]" --yolo -m gemini-4-argon -o text 2>&1
 ```
 
 Key flags:
 
 - `--yolo` or `-y`: Auto-approve all tool calls
-- `-m gemini-3.8-flash`: Required on every call (see Model Rule above)
-- `-m gemini-3-pro-preview`: The only alternative, for tasks that need a Pro model
+- `-m gemini-4-argon`: Required on every call (see Model Rule above)
+- `-m gemini-3.8-flash`: The only alternative, a fallback when argon is rate-limited or unavailable
 - `-o text`: Human-readable output
 - `-o json`: Structured output with stats
 
@@ -93,7 +93,7 @@ Key flags:
 
 ### 4. Output Processing
 
-For JSON output (`-m gemini-3.8-flash -o json`), parse:
+For JSON output (`-m gemini-4-argon -o json`), parse:
 
 ```json
 {
@@ -119,23 +119,23 @@ Generate the UUID yourself so nothing needs parsing:
 ```bash
 SID=$(uuidgen | tr 'A-Z' 'a-z')
 gemini -p "Draft [thing] from @outline.md. Return the draft only." \
-  -m gemini-3.8-flash --session-id "$SID" -o json | jq -r '.response'
+  -m gemini-4-argon --session-id "$SID" -o json | jq -r '.response'
 ```
 
 Or let Gemini assign one and read it back from the JSON:
 
 ```bash
-SID=$(gemini -p "[task]" -m gemini-3.8-flash -o json | jq -r '.session_id')
+SID=$(gemini -p "[task]" -m gemini-4-argon -o json | jq -r '.session_id')
 ```
 
 ### 2. Follow up with `-r`
 
 ```bash
 echo "Tighten section 2 to 400 words. Keep the opening." \
-  | gemini -r "$SID" -m gemini-3.8-flash -o json | jq -r '.response'
+  | gemini -r "$SID" -m gemini-4-argon -o json | jq -r '.response'
 ```
 
-Do not reuse `--session-id` for the follow-up. It only starts new sessions and fails with `Session ID "..." already exists. Use --resume to resume it`.
+Do not reuse `--session-id` for the follow-up. It only starts new sessions and fails with `Session ID "..." already exists. Use --resume to resume it, or provide a different ID.`.
 
 ### 3. Recover a lost ID
 
@@ -190,11 +190,11 @@ Reference a file with `@path` inside the prompt. This works in headless mode and
 ```bash
 # Give a writing task its source material up front
 gemini -p "Draft release notes from @CHANGELOG.md, matching the voice in @docs/voice.md." \
-  -m gemini-3.8-flash --session-id "$SID" -o json
+  -m gemini-4-argon --session-id "$SID" -o json
 
 # Vision works
 gemini -p "Transcribe the whiteboard in @~/Desktop/board.png as a markdown outline." \
-  -m gemini-3.8-flash -o text
+  -m gemini-4-argon -o text
 ```
 
 Notes:
@@ -210,49 +210,49 @@ Notes:
 ### Code Generation
 
 ```bash
-gemini "Create [description] with [features]. Output complete file content." --yolo -m gemini-3.8-flash -o text
+gemini "Create [description] with [features]. Output complete file content." --yolo -m gemini-4-argon -o text
 ```
 
 ### Code Review
 
 ```bash
-gemini "Review [file] for: 1) features, 2) bugs/security issues, 3) improvements" -m gemini-3.8-flash -o text
+gemini "Review [file] for: 1) features, 2) bugs/security issues, 3) improvements" -m gemini-4-argon -o text
 ```
 
 ### Bug Fixing
 
 ```bash
-gemini "Fix these bugs in [file]: [list]. Apply fixes now." --yolo -m gemini-3.8-flash -o text
+gemini "Fix these bugs in [file]: [list]. Apply fixes now." --yolo -m gemini-4-argon -o text
 ```
 
 ### Test Generation
 
 ```bash
-gemini "Generate [Jest/pytest] tests for [file]. Focus on [areas]." --yolo -m gemini-3.8-flash -o text
+gemini "Generate [Jest/pytest] tests for [file]. Focus on [areas]." --yolo -m gemini-4-argon -o text
 ```
 
 ### Documentation
 
 ```bash
-gemini "Generate JSDoc for all functions in [file]. Output as markdown." --yolo -m gemini-3.8-flash -o text
+gemini "Generate JSDoc for all functions in [file]. Output as markdown." --yolo -m gemini-4-argon -o text
 ```
 
 ### Architecture Analysis
 
 ```bash
-gemini "Use codebase_investigator to analyze this project" -m gemini-3.8-flash -o text
+gemini "Use codebase_investigator to analyze this project" -m gemini-4-argon -o text
 ```
 
 ### Web Research
 
 ```bash
-gemini "What are the latest [topic]? Use Google Search." -m gemini-3.8-flash -o text
+gemini "What are the latest [topic]? Use Google Search." -m gemini-4-argon -o text
 ```
 
-### Pro Model (Only When Required)
+### Fallback Model (Only When Argon Is Unavailable)
 
 ```bash
-gemini "[prompt]" -m gemini-3-pro-preview -o text
+gemini "[prompt]" -m gemini-3.8-flash -o text
 ```
 
 ## Error Handling
@@ -260,7 +260,7 @@ gemini "[prompt]" -m gemini-3-pro-preview -o text
 ### Rate Limit Exceeded
 
 - CLI auto-retries with backoff
-- Stay on `-m gemini-3.8-flash`; `gemini-3-pro-preview` burns quota faster
+- Let the retry finish on `-m gemini-4-argon`; drop to `-m gemini-3.8-flash` only if argon stays rate-limited
 - Run in background for long operations
 
 ### Command Failures
@@ -299,13 +299,13 @@ Always verify Gemini's output:
 
 ```bash
 # 1. Generate
-gemini "Create [code]" --yolo -m gemini-3.8-flash -o text
+gemini "Create [code]" --yolo -m gemini-4-argon -o text
 
 # 2. Review (Gemini reviews its own work)
-gemini "Review [file] for bugs and security issues" -m gemini-3.8-flash -o text
+gemini "Review [file] for bugs and security issues" -m gemini-4-argon -o text
 
 # 3. Fix identified issues
-gemini "Fix [issues] in [file]. Apply now." --yolo -m gemini-3.8-flash -o text
+gemini "Fix [issues] in [file]. Apply now." --yolo -m gemini-4-argon -o text
 ```
 
 ### Background Execution
@@ -313,7 +313,7 @@ gemini "Fix [issues] in [file]. Apply now." --yolo -m gemini-3.8-flash -o text
 For long tasks, run in background and monitor:
 
 ```bash
-gemini "[long task]" --yolo -m gemini-3.8-flash -o text 2>&1 &
+gemini "[long task]" --yolo -m gemini-4-argon -o text 2>&1 &
 # Monitor with BashOutput tool
 ```
 
@@ -334,7 +334,7 @@ Create `.gemini/GEMINI.md` in project root for persistent context that Gemini wi
 ### Session Management
 
 List sessions: `gemini --list-sessions`
-Resume session: `echo "follow-up" | gemini -r "$SID" -m gemini-3.8-flash -o text`
+Resume session: `echo "follow-up" | gemini -r "$SID" -m gemini-4-argon -o text`
 
 See "Long-Running Collaboration" above for the full multi-turn workflow.
 

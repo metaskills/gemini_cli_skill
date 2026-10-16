@@ -17,7 +17,7 @@ Performs web search using Google Search API.
 
 **Usage:**
 ```bash
-gemini "What are the latest React 19 features? Use Google Search." -m gemini-3.8-flash -o text
+gemini "What are the latest React 19 features? Use Google Search." -m gemini-4-argon -o text
 ```
 
 **Best For:**
@@ -45,7 +45,7 @@ Specialized tool for deep codebase analysis.
 
 **Usage:**
 ```bash
-gemini "Use the codebase_investigator tool to analyze this project" -m gemini-3.8-flash -o text
+gemini "Use the codebase_investigator tool to analyze this project" -m gemini-4-argon -o text
 ```
 
 **Output Includes:**
@@ -63,7 +63,7 @@ gemini "Use the codebase_investigator tool to analyze this project" -m gemini-3.
 
 **Example:**
 ```bash
-gemini "Use codebase_investigator to map the authentication flow in this project" -m gemini-3.8-flash -o text
+gemini "Use codebase_investigator to map the authentication flow in this project" -m gemini-4-argon -o text
 ```
 
 ---
@@ -79,7 +79,7 @@ Saves information to persistent long-term memory.
 
 **Usage:**
 ```bash
-gemini "Remember that this project uses Zustand for state management. Save this to memory." -m gemini-3.8-flash -o text
+gemini "Remember that this project uses Zustand for state management. Save this to memory." -m gemini-4-argon -o text
 ```
 
 **Best For:**
@@ -177,7 +177,7 @@ Fetches content from URLs.
 
 **Usage:**
 ```bash
-gemini "Fetch and summarize https://example.com/docs" -m gemini-3.8-flash -o text
+gemini "Fetch and summarize https://example.com/docs" -m gemini-4-argon -o text
 ```
 
 ---
@@ -216,16 +216,16 @@ Gemini automatically selects appropriate tools based on the prompt:
 You can explicitly request tools:
 
 ```bash
-gemini "Use the codebase_investigator tool to..." -m gemini-3.8-flash -o text
-gemini "Search the web for..." -m gemini-3.8-flash -o text
-gemini "Use glob to find all..." -m gemini-3.8-flash -o text
+gemini "Use the codebase_investigator tool to..." -m gemini-4-argon -o text
+gemini "Search the web for..." -m gemini-4-argon -o text
+gemini "Use glob to find all..." -m gemini-4-argon -o text
 ```
 
 ---
 
 ## Tool Statistics in JSON Output
 
-When using `-m gemini-3.8-flash -o json`, tool usage is reported:
+When using `-m gemini-4-argon -o json`, tool usage is reported:
 
 ```json
 {
@@ -293,7 +293,7 @@ When using `-m gemini-3.8-flash -o json`, tool usage is reported:
 In settings or command line, restrict available tools:
 
 ```bash
-gemini --allowed-tools "read_file,glob" "Find config files" -m gemini-3.8-flash -o text
+gemini --allowed-tools "read_file,glob" "Find config files" -m gemini-4-argon -o text
 ```
 
 ### In Settings
@@ -332,15 +332,15 @@ gemini --allowed-tools "read_file,glob" "Find config files" -m gemini-3.8-flash 
 
 **Research → Implement:**
 ```bash
-gemini "Use Google Search to find best practices for [topic], then implement them" --yolo -m gemini-3.8-flash -o text
+gemini "Use Google Search to find best practices for [topic], then implement them" --yolo -m gemini-4-argon -o text
 ```
 
 **Analyze → Report:**
 ```bash
-gemini "Use codebase_investigator to analyze the project, then write a summary report" --yolo -m gemini-3.8-flash -o text
+gemini "Use codebase_investigator to analyze the project, then write a summary report" --yolo -m gemini-4-argon -o text
 ```
 
 **Search → Read → Modify:**
 ```bash
-gemini "Find all files using deprecated API, read them, and suggest updates" -m gemini-3.8-flash -o text
+gemini "Find all files using deprecated API, read them, and suggest updates" -m gemini-4-argon -o text
 ```
