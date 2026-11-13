@@ -49,7 +49,7 @@ Requirements:
 Verify the wiring before relying on it:
 
 ```bash
-gemini -p "Reply with OK" -m gemini-4-argon -o text
+gemini -p "Reply with OK" -m gemini-4-carbon -o text
 ```
 
 ## Command Line Flags
@@ -62,7 +62,7 @@ gemini -p "Reply with OK" -m gemini-4-argon -o text
 | `--prompt` | `-p` | Run headless with this prompt (explicit non-interactive form) |
 | `--output-format` | `-o` | Output format: `text`, `json`, `stream-json` |
 | `--skip-trust` | | Trust the current directory. Required for scripted runs in untrusted dirs |
-| `--model` | `-m` | Model selection - always pass explicitly: `gemini-4-argon` (default) or `gemini-3.8-flash` (fallback) |
+| `--model` | `-m` | Model selection - always pass explicitly: `gemini-4-carbon` (default) or `gemini-3.8-flash` (fallback) |
 
 ### Session Management
 
@@ -103,15 +103,15 @@ gemini -p "Reply with OK" -m gemini-4-argon -o text
 
 ## Output Formats
 
-### Text (`-m gemini-4-argon -o text`)
+### Text (`-m gemini-4-carbon -o text`)
 ```bash
-gemini "prompt" -m gemini-4-argon -o text
+gemini "prompt" -m gemini-4-carbon -o text
 # Returns: Human-readable response
 ```
 
-### JSON (`-m gemini-4-argon -o json`)
+### JSON (`-m gemini-4-carbon -o json`)
 ```bash
-gemini "prompt" -m gemini-4-argon -o json
+gemini "prompt" -m gemini-4-carbon -o json
 ```
 
 Returns structured data:
@@ -120,7 +120,7 @@ Returns structured data:
   "response": "The actual response content",
   "stats": {
     "models": {
-      "gemini-4-argon": {
+      "gemini-4-carbon": {
         "api": {
           "totalRequests": 3,
           "totalErrors": 0,
@@ -163,15 +163,15 @@ Only these two model IDs are allowed. Always pass `-m` explicitly - never rely o
 
 | Model | Use Case |
 |-------|----------|
-| `gemini-4-argon` | Default for everything |
-| `gemini-3.8-flash` | Fallback only, when argon is rate-limited or unavailable |
+| `gemini-4-carbon` | Default for everything |
+| `gemini-3.8-flash` | Fallback only, when carbon is rate-limited or unavailable |
 
 ### Usage
 ```bash
 # Default
-gemini "simple task" -m gemini-4-argon -o text
+gemini "simple task" -m gemini-4-carbon -o text
 
-# Fallback only when argon is unavailable
+# Fallback only when carbon is unavailable
 gemini "simple task" -m gemini-3.8-flash -o text
 ```
 
@@ -247,23 +247,23 @@ The bracketed UUID is the durable handle. Indexes shift as new sessions are crea
 Every `-o json` run returns one at the top level:
 
 ```bash
-SID=$(gemini -p "[task]" -m gemini-4-argon -o json | jq -r '.session_id')
+SID=$(gemini -p "[task]" -m gemini-4-carbon -o json | jq -r '.session_id')
 ```
 
 Or set it yourself on the first call:
 
 ```bash
 SID=$(uuidgen | tr 'A-Z' 'a-z')
-gemini -p "[task]" -m gemini-4-argon --session-id "$SID" -o json
+gemini -p "[task]" -m gemini-4-carbon --session-id "$SID" -o json
 ```
 
 ### Resume Session
 ```bash
 # By UUID - always prefer this
-echo "follow-up question" | gemini -r "$SID" -m gemini-4-argon -o json
+echo "follow-up question" | gemini -r "$SID" -m gemini-4-carbon -o json
 
 # By index or latest - convenient, but fragile in scripts
-echo "continue" | gemini -r latest -m gemini-4-argon -o text
+echo "continue" | gemini -r latest -m gemini-4-carbon -o text
 ```
 
 A resumed run returns the same `session_id`, which is how you confirm the follow-up landed on the right conversation. Reusing `--session-id` instead of `-r` fails with `Session ID "..." already exists`.
@@ -280,7 +280,7 @@ A resumed run returns the same `session_id`, which is how you confirm the follow
 - Typical wait: 1-5 seconds
 
 ### Mitigation
-1. Let auto-retry finish on `gemini-4-argon`, then fall back to `gemini-3.8-flash` if it stays limited
+1. Let auto-retry finish on `gemini-4-carbon`, then fall back to `gemini-3.8-flash` if it stays limited
 2. Batch operations into single prompts
 3. Run long tasks in background
 
@@ -304,24 +304,24 @@ In interactive mode, these slash commands are available:
 
 ### Pipe Input
 ```bash
-echo "What is 2+2?" | gemini -m gemini-4-argon -o text
-cat file.txt | gemini "summarize this" -m gemini-4-argon -o text
+echo "What is 2+2?" | gemini -m gemini-4-carbon -o text
+cat file.txt | gemini "summarize this" -m gemini-4-carbon -o text
 ```
 
 ### File Reference Syntax
 In prompts, reference files with `@`:
 ```bash
-gemini "Review @./src/main.js for bugs" -m gemini-4-argon -o text
+gemini "Review @./src/main.js for bugs" -m gemini-4-carbon -o text
 
 # Images and PDFs attach as real multimodal input
-gemini "Transcribe @design/board.png as markdown" -m gemini-4-argon -o text
-gemini "Summarize the findings in @report.pdf" -m gemini-4-argon -o text
+gemini "Transcribe @design/board.png as markdown" -m gemini-4-carbon -o text
+gemini "Summarize the findings in @report.pdf" -m gemini-4-carbon -o text
 
 # Directories expand to every file inside
-gemini "Review everything in @src/handlers/" -m gemini-4-argon -o text
+gemini "Review everything in @src/handlers/" -m gemini-4-carbon -o text
 
 # Absolute paths outside the workspace resolve without extra flags
-gemini "Check @/Users/me/notes/spec.md against @./src" -m gemini-4-argon -o text
+gemini "Check @/Users/me/notes/spec.md against @./src" -m gemini-4-carbon -o text
 ```
 
 | Target | Behavior |
@@ -356,7 +356,7 @@ In interactive mode, prefix with `!`:
 | "API key not found" | Set `GEMINI_API_KEY`, or configure Vertex AI (see Authentication) |
 | "Could not load the default credentials" | `GOOGLE_APPLICATION_CREDENTIALS` is unset or points at a missing file |
 | "Permission denied on resource project" | Service account lacks `roles/aiplatform.user`, or `GOOGLE_CLOUD_PROJECT` is wrong |
-| "Rate limit exceeded" | Wait for auto-retry or stay on `gemini-4-argon` |
+| "Rate limit exceeded" | Wait for auto-retry or stay on `gemini-4-carbon` |
 | "Context too large" | Use `.geminiignore` or be specific |
 | "Tool call failed" | Check JSON stats for details |
 | "No previous sessions found" (concurrent eviction) | Keep durable state in files on disk. Fall back to fresh session and re-attach file state on failure. |
@@ -366,7 +366,7 @@ In interactive mode, prefix with `!`:
 
 ### Debug Mode
 ```bash
-gemini "prompt" --debug -m gemini-4-argon -o text
+gemini "prompt" --debug -m gemini-4-carbon -o text
 ```
 
 ### Error Reports
