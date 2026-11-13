@@ -9,12 +9,22 @@ This skill enables Claude Code to effectively orchestrate Gemini CLI (verified a
 
 ## Model Rule (Mandatory)
 
-Every `gemini` invocation must pass `-m` explicitly. Only two model IDs are permitted:
+Every `gemini` invocation must pass `-m` explicitly. Only three model IDs are permitted:
 
-- `gemini-4-carbon` - the default, use it for everything
+- `gemini-4-carbon` - the default, use it for everything unless a task clearly calls for speed
+- `gemini-4-hydrogen` - the fast Gemini 4 model, use it when a quick turnaround matters more than anything else
 - `gemini-3.8-flash` - fallback only, when `gemini-4-carbon` is rate-limited or unavailable
 
 Never omit `-m` and never use any other model ID.
+
+### Carbon vs Hydrogen
+
+Both are Gemini 4 models and both always do some thinking before they answer.
+
+- **Carbon** is the general-purpose default. Reach for it on code generation, reviews, architecture analysis, research, and long multi-turn work.
+- **Hydrogen** is the speed pick. It responds noticeably faster, so use it for quick questions, short summaries, formatting, small reviews, and fan-out jobs where many calls run in parallel.
+
+If you are unsure, use Carbon. Switch a task to Hydrogen when you are waiting on the answer and the job is small or simple.
 
 ## When to Use This Skill
 
@@ -75,7 +85,8 @@ Key flags:
 
 - `--yolo` or `-y`: Auto-approve all tool calls
 - `-m gemini-4-carbon`: Required on every call (see Model Rule above)
-- `-m gemini-3.8-flash`: The only alternative, a fallback when carbon is rate-limited or unavailable
+- `-m gemini-4-hydrogen`: The fast option for quick, simple tasks (see Carbon vs Hydrogen above)
+- `-m gemini-3.8-flash`: Fallback only, when carbon is rate-limited or unavailable
 - `-o text`: Human-readable output
 - `-o json`: Structured output with stats
 

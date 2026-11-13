@@ -110,7 +110,7 @@ Ready-to-use templates for:
 - **File Attachments** - `@path` for text, images, PDFs, and whole directories
 - **Generate-Review-Fix** - Quality assurance cycle
 - **Background Execution** - Parallel task processing
-- **Model Selection** - `gemini-4-carbon` by default, `gemini-3.8-flash` as a fallback only
+- **Model Selection** - `gemini-4-carbon` by default, `gemini-4-hydrogen` when you want speed, `gemini-3.8-flash` as a fallback only
 - **Rate Limit Handling** - Strategies for free tier limits
 
 ### Gemini's Unique Tools
@@ -133,6 +133,9 @@ gemini "What's new in [topic]? Use Google Search." -m gemini-4-carbon -o text
 
 # Architecture analysis
 gemini "Use codebase_investigator to analyze this project" -m gemini-4-carbon -o text
+
+# Quick answer, use the fast model
+gemini "Summarize @notes.md in five bullets" -m gemini-4-hydrogen -o text
 
 # Fallback, only when carbon is rate-limited or unavailable
 gemini "[prompt]" -m gemini-3.8-flash -o text

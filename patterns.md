@@ -88,13 +88,15 @@ gemini "Create tests" --yolo -m gemini-4-carbon -o text 2>&1 &
 
 ## Pattern 4: Model Selection Strategy
 
-Two model IDs, nothing else. Always pass `-m` explicitly.
+Three model IDs, nothing else. Always pass `-m` explicitly.
 
 ### Decision Tree
 
 ```
 Is gemini-4-carbon available (not rate-limited or erroring)?
-├── Yes → -m gemini-4-carbon    (the default for everything)
+├── Yes → Is the task small or simple, and are you waiting on the answer?
+│         ├── Yes → -m gemini-4-hydrogen  (the fast model)
+│         └── No  → -m gemini-4-carbon    (the default for everything else)
 └── No  → -m gemini-3.8-flash  (fallback only)
 ```
 
@@ -104,10 +106,16 @@ Is gemini-4-carbon available (not rate-limited or erroring)?
 gemini "Analyze codebase architecture" -m gemini-4-carbon -o text
 
 # Quick: Simple formatting
-gemini "Format this JSON" -m gemini-4-carbon -o text
+gemini "Format this JSON" -m gemini-4-hydrogen -o text
 
 # Trivial: One-liner
-gemini "What is 2+2?" -m gemini-4-carbon -o text
+gemini "What is 2+2?" -m gemini-4-hydrogen -o text
+
+# Fan-out: many small calls in parallel
+for f in src/*.js; do
+  gemini "One-line summary of @$f" -m gemini-4-hydrogen -o text &
+done
+wait
 ```
 
 ## Pattern 5: Rate Limit Handling

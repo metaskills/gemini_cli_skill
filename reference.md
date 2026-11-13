@@ -62,7 +62,7 @@ gemini -p "Reply with OK" -m gemini-4-carbon -o text
 | `--prompt` | `-p` | Run headless with this prompt (explicit non-interactive form) |
 | `--output-format` | `-o` | Output format: `text`, `json`, `stream-json` |
 | `--skip-trust` | | Trust the current directory. Required for scripted runs in untrusted dirs |
-| `--model` | `-m` | Model selection - always pass explicitly: `gemini-4-carbon` (default) or `gemini-3.8-flash` (fallback) |
+| `--model` | `-m` | Model selection - always pass explicitly: `gemini-4-carbon` (default), `gemini-4-hydrogen` (fast), or `gemini-3.8-flash` (fallback) |
 
 ### Session Management
 
@@ -159,17 +159,23 @@ Real-time newline-delimited JSON events for monitoring long tasks.
 
 ### Available Models
 
-Only these two model IDs are allowed. Always pass `-m` explicitly - never rely on the CLI default.
+Only these three model IDs are allowed. Always pass `-m` explicitly - never rely on the CLI default.
 
 | Model | Use Case |
 |-------|----------|
-| `gemini-4-carbon` | Default for everything |
+| `gemini-4-carbon` | Default for everything: code generation, reviews, architecture analysis, research, long multi-turn work |
+| `gemini-4-hydrogen` | The fast Gemini 4 model: quick questions, short summaries, formatting, small reviews, parallel fan-out |
 | `gemini-3.8-flash` | Fallback only, when carbon is rate-limited or unavailable |
+
+Carbon and Hydrogen both think before answering. Hydrogen responds faster, so pick it when you are waiting on the result and the task is small or simple. When unsure, use Carbon.
 
 ### Usage
 ```bash
 # Default
-gemini "simple task" -m gemini-4-carbon -o text
+gemini "complex task" -m gemini-4-carbon -o text
+
+# Fast
+gemini "simple task" -m gemini-4-hydrogen -o text
 
 # Fallback only when carbon is unavailable
 gemini "simple task" -m gemini-3.8-flash -o text
